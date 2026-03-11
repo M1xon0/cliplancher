@@ -16,6 +16,7 @@ export const pluginCommonProtocol: LauncherAppPlugin = (app) => {
         method: request.method,
         body: body instanceof Readable ? Readable.toWeb(body) as any : body,
         redirect: 'follow',
+        cache: 'no-cache' as any,
         // @ts-ignore
         duplex: body ? 'half' : undefined,
       })
