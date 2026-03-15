@@ -1,14 +1,14 @@
-import { InstanceLogServiceKey, type InstanceLogService as IInstanceLogService } from '@xmcl/runtime-api'
-import { readFile, unlink } from 'fs-extra'
-import { isAbsolute, join } from 'path'
-import { Inject, LauncherAppKey } from '~/app'
-import { kEncodingWorker, type EncodingWorker } from '~/encoding'
-import { AbstractService, ExposeServiceKey, Singleton } from '~/service'
-import { LauncherApp } from '../app/LauncherApp'
-import { UTF8 } from '../util/encoding'
-import { AnyError, isSystemError } from '@xmcl/utils'
-import { ENOENT_ERROR, readdirIfPresent } from '../util/fs'
-import { gunzip } from '../util/zip'
+import { InstanceLogServiceKey, type InstanceLogService as IInstanceLogService } from '@xmcl/runtime-api';
+import { AnyError, isSystemError } from '@xmcl/utils';
+import { readFile, unlink } from 'fs-extra';
+import { isAbsolute, join } from 'path';
+import { Inject, LauncherAppKey } from '~/app';
+import { kEncodingWorker, type EncodingWorker } from '~/encoding';
+import { AbstractService, ExposeServiceKey, Singleton } from '~/service';
+import { LauncherApp } from '../app/LauncherApp';
+import { UTF8 } from '../util/encoding';
+import { ENOENT_ERROR, readdirIfPresent } from '../util/fs';
+import { gunzip } from '../util/zip';
 
 /**
  * Provide the ability to list/read/remove log and crash reports of a instance.
@@ -103,7 +103,7 @@ export class InstanceLogService extends AbstractService implements IInstanceLogS
     try {
       let buf = await readFile(filePath.trim())
       if (name.endsWith('.gz')) {
-        buf = await gunzip(buf)
+        buf = await gunzip(Buffer.from(buf) as Buffer<ArrayBuffer>)
       }
       const encoding = await this.encoder.guessEncodingByBuffer(buf.subarray(0, 512 * 128)).catch(() => undefined)
       const result = await this.encoder.decode(buf, encoding || UTF8)
