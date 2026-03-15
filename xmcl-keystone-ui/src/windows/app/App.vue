@@ -31,7 +31,6 @@ import { kTheme } from '@/composables/theme'
 import { injection } from '@/util/inject'
 import AppContextMenu from '@/views/AppContextMenu.vue'
 import AppSystemBar from '@/views/AppSystemBar.vue'
-import Multiplayer from '@/views/Multiplayer.vue'
 
 const { isDark } = injection(kTheme)
 
