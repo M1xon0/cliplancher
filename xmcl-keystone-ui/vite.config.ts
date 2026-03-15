@@ -1,11 +1,10 @@
-import VueI18n from '@intlify/unplugin-vue-i18n/vite'
-import createVuePlugin from '@vitejs/plugin-vue2'
-import { readdirSync } from 'fs'
-import { join, resolve } from 'path'
-import { visualizer } from "rollup-plugin-visualizer"
-import UnoCSS from 'unocss/vite'
-import AutoImport from 'unplugin-auto-import/vite'
-import { defineConfig } from 'vite'
+import VueI18n from '@intlify/unplugin-vue-i18n/vite';
+import createVuePlugin from '@vitejs/plugin-vue2';
+import { readdirSync } from 'fs';
+import { join, resolve } from 'path';
+import UnoCSS from 'unocss/vite';
+import AutoImport from 'unplugin-auto-import/vite';
+import { defineConfig } from 'vite';
 
 const entries = readdirSync(join(__dirname, './src'))
   .filter((f) => f.endsWith('.html'))
@@ -19,7 +18,7 @@ export default defineConfig({
     port: 3000,
   },
   root: join(__dirname, './src'),
-  base: '', // has to set to empty string so the html assets path will be relative
+  base: '',
   build: {
     rollupOptions: {
       input: entries,
@@ -35,6 +34,8 @@ export default defineConfig({
     assetsInlineLimit: 0,
   },
   define: {
+    '__defProp': 'Object.defineProperty',
+    '__name': '((f) => f)',
   },
   resolve: {
     alias: {
@@ -49,25 +50,18 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    exclude: ['electron', '@xmcl/utils', '@xmcl/resource'],
+    exclude: ['electron', '@xmcl/utils', '@xmcl/resource', '@microsoft/applicationinsights-web'],
     esbuildOptions: {
       minify: false,
       keepNames: true,
+      supported: {
+        'dynamic-import': true,
+      },
     },
   },
   plugins: [
     createVuePlugin(),
     UnoCSS(),
-    // WindiCSS({
-    //   config: {
-    //     important: true,
-    //   },
-    //   scan: {
-    //     dirs: [join(__dirname, './src')],
-    //     fileExtensions: ['vue', 'ts'],
-    //   },
-    // }),
-
     VueI18n({
       include: [
         resolve(__dirname, 'locales/**'),
@@ -76,7 +70,6 @@ export default defineConfig({
       strictMessage: false,
       bridge: false,
     }),
-
     AutoImport({
       imports: [
         'vue',
@@ -94,8 +87,8 @@ export default defineConfig({
       exclude: ['node_modules', /xmcl\/packages.+/],
       eslintrc: {
         enabled: true,
-        filepath: './.eslintrc-auto-import.json', // Default `./.eslintrc-auto-import.json`
-        globalsPropValue: true, // Default `true`, (true | false | 'readonly' | 'readable' | 'writable' | 'writeable')
+        filepath: './.eslintrc-auto-import.json',
+        globalsPropValue: true,
       },
     }),
   ],

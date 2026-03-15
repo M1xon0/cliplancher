@@ -1,23 +1,43 @@
 {
-    "version": "0.54.4",
-    "private": true,
-    "license": "MIT",
-    "packageManager": "pnpm@9.3.0",
-    "engines": {
-        "node": ">=20"
-    },
-    "scripts": {
-        "compile": "pnpm -r compile",
-        "test": "vitest",
-        "build:schema": "pnpm run --prefix=xmcl-runtime-api build:schema",
-        "build": "pnpm run --prefix=xmcl-electron-app build",
-        "build:all": "pnpm run --prefix=xmcl-electron-app build:all",
-        "build:renderer": "pnpm --prefix=xmcl-keystone-ui build",
-        "postsign": "pnpm run --prefix=xmcl-electron-app postsign",
-        "check": "pnpm run --prefix=xmcl-runtime-api check && pnpm run --prefix=xmcl-runtime check && pnpm run --prefix=xmcl-electron-app check && pnpm run --prefix=xmcl-keystone-ui check",
-        "dev:main": "pnpm run --prefix=xmcl-electron-app dev",
-        "dev:renderer": "pnpm run --prefix=xmcl-keystone-ui dev",
-        "lint": "pnpm run --prefix=xmcl-keystone-ui lint && pnpm run --prefix=xmcl-runtime lint && pnpm run --prefix=xmcl-runtime-api lint && pnpm run --prefix=xmcl-electron-app lint",
-        "lint:fix": "pnpm run --prefix=xmcl-runtime-api lint:fix && pnpm run --prefix=xmcl-runtime lint:fix && pnpm run --prefix=xmcl-electron-app lint:fix && pnpm run --prefix=xmcl-keystone-ui lint:fix"
-    }
+  "version": "0.54.4",
+  "private": true,
+  "license": "MIT",
+  "packageManager": "bun@1.3.10",
+  "engines": {
+    "node": ">=20",
+    "bun": ">=1.3.10"
+  },
+  "workspaces": [
+    "xmcl/packages/**",
+    "xmcl-electron-app",
+    "xmcl-runtime-api",
+    "xmcl-runtime",
+    "xmcl-keystone-ui",
+    ".github/actions/*",
+    "packages/**"
+  ],
+  "scripts": {
+    "postinstall": "bun setup.ts",
+    "compile": "bun run --filter='*' compile",
+    "test": "bunx vitest",
+    "build:schema": "bun run --cwd=xmcl-runtime-api build:schema",
+    "build": "bun run --cwd=xmcl-electron-app build",
+    "build:all": "bun run --cwd=xmcl-electron-app build:all",
+    "build:renderer": "bun run --cwd=xmcl-keystone-ui build",
+    "postsign": "bun run --cwd=xmcl-electron-app postsign",
+    "check": "bun run --filter='xmcl-runtime-api|xmcl-runtime|xmcl-electron-app|xmcl-keystone-ui' check",
+    "dev:main": "bun run --cwd=xmcl-electron-app dev",
+    "dev:renderer": "bun run --cwd=xmcl-keystone-ui dev",
+    "dev": "bun dev.ts",
+    "lint": "bun run --filter='xmcl-keystone-ui|xmcl-runtime|xmcl-runtime-api|xmcl-electron-app' lint",
+    "lint:fix": "bun run --filter='xmcl-runtime-api|xmcl-runtime|xmcl-electron-app|xmcl-keystone-ui' lint:fix"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.10"
+  },
+  "trustedDependencies": [
+    "electron",
+    "node-datachannel",
+    "@electron/rebuild"
+  ]
 }
