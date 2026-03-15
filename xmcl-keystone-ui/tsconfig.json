@@ -13,7 +13,7 @@
       ],
       "~main/*": [
         "./src/windows/main/*"
-      ],
+      ]
     },
     "esModuleInterop": true,
     "experimentalDecorators": true,
@@ -30,6 +30,11 @@
     "target": 2.7,
     "experimentalSuppressUnknownJsxPropertyErrors": false
   },
+  "include": [
+    "src/**/*",
+    "src/**/*.vue",
+    "auto-imports.d.ts"
+  ],
   "exclude": [
     "node_modules",
     "../xmcl",
