@@ -2,6 +2,7 @@ import { CurseforgeBuiltinClassId } from './curseforge'
 import { useService } from './service'
 import { InstanceModsServiceKey } from '@xmcl/runtime-api'
 import { ref, watch, shallowRef } from 'vue'
+import type { Ref } from 'vue'
 
 interface SpotlightSearchResult {
   id: string
@@ -30,14 +31,14 @@ interface LocalModResult {
 }
 
 export function useSpotlightSearch(query: Ref<string>) {
-  const modpackResults = shallowRef<SpotlightSearchResult[]>([])
+  const modResults = shallowRef<SpotlightSearchResult[]>([])
   const localModResults = shallowRef<LocalModResult[]>([])
   const isSearching = ref(false)
 
-  // Search modpacks from all sources
+  // Search mods from Modrinth
   watch(query, async (newQuery) => {
     if (!newQuery || newQuery.trim().length < 2) {
-      modpackResults.value = []
+      modResults.value = []
       return
     }
 
@@ -45,27 +46,9 @@ export function useSpotlightSearch(query: Ref<string>) {
     const searchQuery = newQuery.trim()
 
     try {
-      // Search Modrinth
-      const modrinthPromise = searchModrinthModpacks(searchQuery)
-
-      // Search CurseForge
-      const curseforgePromise = searchCurseforgeModpacks(searchQuery)
-
-      // Search FTB
-      const ftbPromise = searchFtbModpacks(searchQuery)
-
-      const [modrinthResults, curseforgeResults, ftbResults] = await Promise.all([
-        modrinthPromise,
-        curseforgePromise,
-        ftbPromise,
-      ])
-
-      // Merge and sort results - limit to 10 for spotlight
-      modpackResults.value = [
-        ...modrinthResults,
-        ...curseforgeResults,
-        ...ftbResults,
-      ].slice(0, 10)
+      // Search Modrinth for mods
+      const modrinthMods = await searchModrinthMods(searchQuery)
+      modResults.value = modrinthMods.slice(0, 10)
     } finally {
       isSearching.value = false
     }
@@ -101,7 +84,7 @@ export function useSpotlightSearch(query: Ref<string>) {
   }, { immediate: true })
 
   return {
-    modpackResults,
+    modpackResults: modResults,
     localModResults,
     isSearching,
   }
@@ -129,6 +112,33 @@ async function searchModrinthModpacks(query: string): Promise<SpotlightSearchRes
     }))
   } catch (e) {
     console.error('Failed to search Modrinth:', e)
+    return []
+  }
+}
+
+// Search Modrinth mods (not modpacks)
+async function searchModrinthMods(query: string): Promise<SpotlightSearchResult[]> {
+  try {
+    const url = `https://api.modrinth.com/v2/search?limit=10&index=relevance&query=${encodeURIComponent(query)}&project_type=mod`
+    const response = await fetch(url)
+    if (!response.ok) return []
+
+    const data = await response.json()
+    return data.hits.map((hit: any) => ({
+      id: hit.project_id,
+      type: 'modrinth' as const,
+      title: hit.title,
+      iconUrl: hit.icon_url,
+      description: hit.description,
+      author: hit.author,
+      downloadCount: formatNumber(hit.downloads),
+      updatedAt: formatDate(hit.date_modified),
+      version: hit.versions?.[0] || '',
+      gallery: hit.gallery || [],
+      gameVersions: hit.versions || [],
+    }))
+  } catch (e) {
+    console.error('Failed to search Modrinth mods:', e)
     return []
   }
 }

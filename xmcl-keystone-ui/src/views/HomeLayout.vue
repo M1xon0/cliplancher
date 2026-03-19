@@ -23,7 +23,6 @@
     <HomeLaunchStatusDialog />
     <HomeInstanceInstallDialog />
     <AppCollectionDialog />
-    <Spotlight ref="spotlightRef" />
   </div>
 </template>
 
@@ -32,7 +31,6 @@ import { kInstance } from '@/composables/instance'
 import { usePresence } from '@/composables/presence'
 import { kCompact, useCompactScroll } from '@/composables/scrollTop'
 import { useBlockSharedTooltip } from '@/composables/sharedTooltip'
-import { useSpotlightShortcut } from '@/composables/spotlight'
 import { injection } from '@/util/inject'
 import { useElementBounding, useElementSize, useScroll } from '@vueuse/core'
 import { useInstanceServerStatus } from '../composables/serverStatus'
@@ -41,16 +39,8 @@ import HomeInstanceInstallDialog from './HomeInstanceInstallDialog.vue'
 import HomeLaunchMultiInstanceDialog from './HomeLaunchMultiInstanceDialog.vue'
 import HomeLaunchStatusDialog from './HomeLaunchStatusDialog.vue'
 import HomeLogDialog from './HomeLogDialog.vue'
-import Spotlight from '@/components/Spotlight.vue'
 import AppCollectionDialog from './AppCollectionDialog.vue'
 import HomeDropModpackDialog from './HomeDropModpackDialog.vue'
-
-const spotlightRef = ref<any>(null)
-
-// Register keyboard shortcut for Spotlight
-useSpotlightShortcut(() => {
-  spotlightRef.value?.open()
-})
 
 const router = useRouter()
 

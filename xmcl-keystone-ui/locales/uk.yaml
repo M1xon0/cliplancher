@@ -1345,6 +1345,11 @@ setting:
   sidebarStyleHint: Виберіть між класичним та сучасним дизайном
   streamerMode: Режим стрімера
   streamerModeDescription: Це приховає вашу приватну інформацію, таку як електронна пошта, в лаунчері.
+  spotlightShortcut: Комбінація клавіш Spotlight
+  spotlightShortcutDescription: Комбінація клавіш для відкриття пошуку Spotlight
+  changeShortcut: Змінити
+  resetShortcut: Скинути
+  recordingShortcut: Натисніть клавіші...
   theme:
     dark: Темна тема
     light: Світла тема
@@ -1685,3 +1690,33 @@ spotlight:
     suggestions: Пропозиції
     quickActions: Швидкі дії
     recent: Нещодавні
+  createGame: Створити гру
+  globalSettings: Глобальні налаштування
+  mods: Моди
+  store: Ринок модпаків
+  installToInstance: Встановити в {instance}
+  modCompatibleTooltip: Сумісний з вашим екземпляром
+  modIncompatibleTooltip: Не сумісний з версією вашого екземпляра
+  modVersionWarning: "Цей мод може бути несумісним з Minecraft {version}. Продовжити?"
+  modInstalling: Встановлення моду...
+  modInstallFailed: Помилка встановлення
+  modInstallFailedMessage: Не вдалося встановити мод
+  noInstanceSelected: Екземпляр не вибрано
+  checkDependencies: Перевірити залежності
+  checkingDependencies: Перевірка залежностей...
+  missingDependencies: "Відсутні {count} залежності"
+  allDependenciesSatisfied: Всі залежності задоволені
+  checkDependenciesFailed: Не вдалося перевірити залежності
+  removeUnusedMods: Видалити невикористані моди
+  removingUnusedMods: Видалення невикористаних модів...
+  removedUnusedMods: "Видалено {count} модів"
+  removeUnusedModsFailed: Не вдалося видалити невикористані моди
+  checkUpdates: Перевірити оновлення
+  checkingUpdates: Перевірка оновлень...
+  modsAvailableForUpdate: "{count} модів доступні для оновлення"
+  allModsUpToDate: Всі моди оновлені
+  checkUpdatesFailed: Не вдалося перевірити оновлення
+  upgradeAllMods: Оновити всі моди
+  upgradingMods: Оновлення модів...
+  upgradedMods: "Оновлено {count} модів"
+  upgradeAllModsFailed: Не вдалося оновити моди

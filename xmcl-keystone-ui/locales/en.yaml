@@ -1379,6 +1379,11 @@ setting:
   sidebarStyleHint: Choose between classic and modern notch design
   streamerMode: Streaming Mode
   streamerModeDescription: This will hide your private information like email in launcher.
+  spotlightShortcut: Spotlight Shortcut
+  spotlightShortcutDescription: Keyboard shortcut to open Spotlight search
+  changeShortcut: Change
+  resetShortcut: Reset
+  recordingShortcut: Press keys...
   theme:
     dark: Dark Theme
     light: Light Theme
@@ -1711,3 +1716,33 @@ spotlight:
     suggestions: Suggestions
     quickActions: Quick Actions
     recent: Recent
+  createGame: Create Game
+  globalSettings: Global Settings
+  mods: Mods
+  store: Modpack Market
+  installToInstance: Install to {instance}
+  modCompatibleTooltip: Compatible with your instance
+  modIncompatibleTooltip: Not compatible with your instance version
+  modVersionWarning: "This mod may not be compatible with Minecraft {version}. Continue anyway?"
+  modInstalling: Installing mod...
+  modInstallFailed: Installation Failed
+  modInstallFailedMessage: Failed to install mod
+  noInstanceSelected: No instance selected
+  checkDependencies: Check Dependencies
+  checkingDependencies: Checking dependencies...
+  missingDependencies: "Missing {count} dependencies"
+  allDependenciesSatisfied: All dependencies satisfied
+  checkDependenciesFailed: Failed to check dependencies
+  removeUnusedMods: Remove Unused Mods
+  removingUnusedMods: Removing unused mods...
+  removedUnusedMods: "Removed {count} unused mods"
+  removeUnusedModsFailed: Failed to remove unused mods
+  checkUpdates: Check for Updates
+  checkingUpdates: Checking for updates...
+  modsAvailableForUpdate: "{count} mods available for update"
+  allModsUpToDate: All mods are up to date
+  checkUpdatesFailed: Failed to check for updates
+  upgradeAllMods: Upgrade All Mods
+  upgradingMods: Upgrading mods...
+  upgradedMods: "Upgraded {count} mods"
+  upgradeAllModsFailed: Failed to upgrade mods
