@@ -1703,46 +1703,22 @@ versionType:
   name: Status
   release: Release
 spotlight:
-  placeholder: Search instances, modpacks, mods...
+  placeholder: Search mods, instances...
   navigate: Navigate
   select: Select
   noResults: No results found
-  installMod: "Install mod: {modName}"
-  installModSubtitle: Search and install from Modrinth, CurseForge, or FTB
+  installing: Installing...
+  installed: Installed
+  install: Install
+  installFailed: Failed
+  noModLoader: Current instance has no mod loader
   sections:
     instances: Instances
-    modpacks: ModPacks
     mods: Mods
-    suggestions: Suggestions
+    localMods: Installed Mods
     quickActions: Quick Actions
     recent: Recent
-  createGame: Create Game
-  globalSettings: Global Settings
+  globalSettings: Settings
   mods: Mods
   store: Modpack Market
-  installToInstance: Install to {instance}
-  modCompatibleTooltip: Compatible with your instance
-  modIncompatibleTooltip: Not compatible with your instance version
-  modVersionWarning: "This mod may not be compatible with Minecraft {version}. Continue anyway?"
-  modInstalling: Installing mod...
-  modInstallFailed: Installation Failed
-  modInstallFailedMessage: Failed to install mod
-  noInstanceSelected: No instance selected
-  checkDependencies: Check Dependencies
-  checkingDependencies: Checking dependencies...
-  missingDependencies: "Missing {count} dependencies"
-  allDependenciesSatisfied: All dependencies satisfied
-  checkDependenciesFailed: Failed to check dependencies
-  removeUnusedMods: Remove Unused Mods
-  removingUnusedMods: Removing unused mods...
-  removedUnusedMods: "Removed {count} unused mods"
-  removeUnusedModsFailed: Failed to remove unused mods
-  checkUpdates: Check for Updates
-  checkingUpdates: Checking for updates...
-  modsAvailableForUpdate: "{count} mods available for update"
-  allModsUpToDate: All mods are up to date
-  checkUpdatesFailed: Failed to check for updates
-  upgradeAllMods: Upgrade All Mods
-  upgradingMods: Upgrading mods...
-  upgradedMods: "Upgraded {count} mods"
-  upgradeAllModsFailed: Failed to upgrade mods
+

@@ -1677,46 +1677,22 @@ versionType:
   name: Статус
   release: Випуск
 spotlight:
-  placeholder: Пошук екземплярів, модпаків, модів...
+  placeholder: Пошук модів, екземплярів...
   navigate: Навігація
   select: Вибрати
   noResults: Результатів не знайдено
-  installMod: "Встановити мод: {modName}"
-  installModSubtitle: Пошук і встановлення з Modrinth, CurseForge або FTB
+  installing: Встановлення...
+  installed: Встановлено
+  install: Встановити
+  installFailed: Помилка
+  noModLoader: Поточний екземпляр не має завантажувача модів
   sections:
     instances: Екземпляри
-    modpacks: Модпаки
     mods: Моди
-    suggestions: Пропозиції
+    localMods: Встановлені моди
     quickActions: Швидкі дії
     recent: Нещодавні
-  createGame: Створити гру
-  globalSettings: Глобальні налаштування
+  globalSettings: Налаштування
   mods: Моди
   store: Ринок модпаків
-  installToInstance: Встановити в {instance}
-  modCompatibleTooltip: Сумісний з вашим екземпляром
-  modIncompatibleTooltip: Не сумісний з версією вашого екземпляра
-  modVersionWarning: "Цей мод може бути несумісним з Minecraft {version}. Продовжити?"
-  modInstalling: Встановлення моду...
-  modInstallFailed: Помилка встановлення
-  modInstallFailedMessage: Не вдалося встановити мод
-  noInstanceSelected: Екземпляр не вибрано
-  checkDependencies: Перевірити залежності
-  checkingDependencies: Перевірка залежностей...
-  missingDependencies: "Відсутні {count} залежності"
-  allDependenciesSatisfied: Всі залежності задоволені
-  checkDependenciesFailed: Не вдалося перевірити залежності
-  removeUnusedMods: Видалити невикористані моди
-  removingUnusedMods: Видалення невикористаних модів...
-  removedUnusedMods: "Видалено {count} модів"
-  removeUnusedModsFailed: Не вдалося видалити невикористані моди
-  checkUpdates: Перевірити оновлення
-  checkingUpdates: Перевірка оновлень...
-  modsAvailableForUpdate: "{count} модів доступні для оновлення"
-  allModsUpToDate: Всі моди оновлені
-  checkUpdatesFailed: Не вдалося перевірити оновлення
-  upgradeAllMods: Оновити всі моди
-  upgradingMods: Оновлення модів...
-  upgradedMods: "Оновлено {count} модів"
-  upgradeAllModsFailed: Не вдалося оновити моди
+

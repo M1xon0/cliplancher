@@ -2,314 +2,215 @@
   <v-dialog
     v-model="isVisible"
     :fullscreen="false"
-    :width="650"
+    :width="620"
     :persistent="false"
-    class="spotlight-dialog"
-    content-class="spotlight-content"
+    content-class="spotlight-overlay"
     @keydown.esc="close"
-    @keydown.down="navigateDown"
-    @keydown.up="navigateUp"
-    @keydown.enter="selectHighlighted"
+    @keydown.down.prevent="navigateDown"
+    @keydown.up.prevent="navigateUp"
+    @keydown.enter.prevent="selectHighlighted"
   >
-    <v-card class="spotlight-card rounded-2xl overflow-hidden">
+    <div class="rounded-2xl overflow-hidden border border-white/8 shadow-2xl" style="background: rgba(18, 18, 22, 0.95); backdrop-filter: blur(24px);">
       <!-- Search Input -->
-      <div class="spotlight-search flex items-center gap-3 px-5 py-4 bg-[#1a1a1a]">
-        <v-icon class="text-gray-400" size="24">
-          mdi-magnify
-        </v-icon>
-        <v-text-field
+      <div class="flex items-center gap-3 px-5 py-4 border-b border-white/6">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input
           ref="searchInput"
           v-model="searchQuery"
           :placeholder="t('spotlight.placeholder')"
-          hide-details
-          dense
-          solo
-          flat
-          class="flex-1"
+          class="flex-1 bg-transparent text-white text-base outline-none placeholder-white/30"
           @focus="onSearchFocus"
         >
-          <template #prepend-inner>
-            <span></span>
-          </template>
-        </v-text-field>
-        <div v-if="searchQuery" class="flex items-center gap-1">
-          <v-chip label x-small class="bg-[#2a2a2a] text-gray-400">
-            <v-icon left x-small>
-              mdi-arrow-down
-            </v-icon>
-            {{ t('spotlight.navigate') }}
-          </v-chip>
-          <v-chip label x-small class="bg-[#2a2a2a] text-gray-400">
-            <v-icon left x-small>
-              mdi-keyboard-return
-            </v-icon>
-            {{ t('spotlight.select') }}
-          </v-chip>
+        <transition name="fade">
+          <v-progress-circular v-if="isSearching" indeterminate size="16" width="2" color="rgba(255,255,255,0.3)" />
+        </transition>
+        <div v-if="searchQuery" class="flex items-center gap-1.5">
+          <kbd class="px-1.5 py-0.5 text-[10px] font-mono rounded bg-white/8 text-white/40 border border-white/6">↑↓</kbd>
+          <kbd class="px-1.5 py-0.5 text-[10px] font-mono rounded bg-white/8 text-white/40 border border-white/6">↵</kbd>
         </div>
       </div>
 
-      <v-divider class="border-[#2a2a2a]" />
-
       <!-- Results -->
-      <v-card-text class="spotlight-results pa-0 max-h-[450px] overflow-y-auto">
-        <v-list v-if="searchQuery.trim()" dense class="pa-0 bg-transparent">
+      <div class="max-h-[420px] overflow-y-auto spotlight-scrollbar">
+        <div v-if="searchQuery.trim()" class="py-1">
           <!-- Instances Section -->
-          <v-subheader v-if="filteredInstances.length > 0" class="spotlight-section-header px-4 py-2 text-xs font-semibold uppercase tracking-wider text-gray-500 bg-[#151515]">
-            <v-icon size="16" class="mr-2 text-blue-500">
-              mdi-folder
-            </v-icon>
-            {{ t('spotlight.sections.instances') }}
-          </v-subheader>
-          <v-list-item
-            v-for="(instance, index) in filteredInstances"
-            :key="'instance-' + instance.path"
-            :class="{ 'bg-[#2a2a2a]': highlightedIndex === getInstanceIndex(index) }"
-            class="spotlight-item px-4 py-3 rounded-lg mx-2 my-1 cursor-pointer transition-colors duration-150 hover:bg-[#252525]"
-            @click="selectInstance(instance)"
-          >
-            <v-list-item-avatar :size="42" class="rounded-xl min-w-[42px] h-[42px]">
-              <v-img
-                v-if="instance.icon"
-                :src="instance.icon"
-                class="rounded-xl"
-              />
-              <v-icon v-else color="blue" class="rounded-xl bg-blue-500/20 p-2">
-                mdi-folder
-              </v-icon>
-            </v-list-item-avatar>
-            <v-list-item-content class="ml-3">
-              <v-list-item-title class="font-semibold text-white">
-                {{ instance.name }}
-              </v-list-item-title>
-              <v-list-item-subtitle class="spotlight-subtitle text-gray-400 text-xs mt-1">
-                <v-chip x-small label class="mr-2 bg-[#1a1a1a] text-gray-400">
-                  {{ instance.runtime?.minecraft }}
-                </v-chip>
-                {{ getModLoaderName(instance.runtime) }}
-              </v-list-item-subtitle>
-            </v-list-item-content>
-          </v-list-item>
+          <template v-if="filteredInstances.length > 0">
+            <div class="px-4 pt-3 pb-1.5 text-[10px] font-600 uppercase tracking-widest text-white/30 flex items-center gap-2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(96,165,250,0.7)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+              {{ t('spotlight.sections.instances') }}
+            </div>
+            <div
+              v-for="(instance, index) in filteredInstances"
+              :key="'i-' + instance.path"
+              class="mx-2 px-3 py-2.5 rounded-xl cursor-pointer flex items-center gap-3 transition-all duration-150"
+              :class="highlightedIndex === getInstanceIndex(index) ? 'bg-white/8' : 'hover:bg-white/4'"
+              @click="selectInstance(instance)"
+              @mouseenter="highlightedIndex = getInstanceIndex(index)"
+            >
+              <div style="width: 36px; height: 36px; min-width: 36px; flex: 0 0 36px; border-radius: 4px;" class="overflow-hidden flex-shrink-0 bg-white/5 flex items-center justify-center">
+                <v-img v-if="instance.icon" :src="instance.icon" class="w-full h-full" />
+                <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(96,165,250,0.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-500 text-white/90 truncate">{{ instance.name }}</div>
+                <div class="flex items-center gap-1.5 mt-0.5">
+                  <span class="text-[11px] px-1.5 py-px rounded bg-white/6 text-white/40 font-mono">{{ instance.runtime?.minecraft }}</span>
+                  <span class="text-[11px] text-white/30">{{ getModLoaderName(instance.runtime) }}</span>
+                </div>
+              </div>
+            </div>
+          </template>
 
-          <!-- ModPacks Section (Market) -->
-          <v-subheader v-if="modpackResults.length > 0" class="spotlight-section-header px-4 py-2 text-xs font-semibold uppercase tracking-wider text-gray-500 bg-[#151515]">
-            <v-icon size="16" class="mr-2 text-green-500">
-              mdi-package-variant
-            </v-icon>
-            {{ t('spotlight.sections.modpacks') }}
-          </v-subheader>
-          <v-list-item
-            v-for="(pack, index) in modpackResults"
-            :key="'modpack-' + pack.id"
-            :class="{ 'bg-[#2a2a2a]': highlightedIndex === getModpackIndex(index) }"
-            class="spotlight-item px-4 py-3 rounded-lg mx-2 my-1 cursor-pointer transition-colors duration-150 hover:bg-[#252525]"
-            @click="selectModpack(pack)"
-          >
-            <v-list-item-avatar :size="42" class="rounded-xl min-w-[42px] h-[42px]">
-              <v-img
-                v-if="pack.iconUrl"
-                :src="pack.iconUrl"
-                class="rounded-xl"
-              />
-              <v-icon v-else :color="getSourceColor(pack.type)" class="rounded-xl p-2" :class="getSourceIconBgClass(pack.type)">
-                {{ getSourceIconName(pack.type) }}
-              </v-icon>
-            </v-list-item-avatar>
-            <v-list-item-content class="ml-3">
-              <v-list-item-title class="font-semibold text-white">
-                {{ pack.localizedTitle || pack.title }}
-              </v-list-item-title>
-              <v-list-item-subtitle class="spotlight-subtitle text-gray-400 text-xs mt-1 truncate">
-                {{ pack.localizedDescription || pack.description }}
-              </v-list-item-subtitle>
-            </v-list-item-content>
-            <v-list-item-action>
-              <v-chip x-small :color="getSourceColor(pack.type)" class="rounded-full font-medium">
-                {{ pack.type }}
-              </v-chip>
-            </v-list-item-action>
-          </v-list-item>
+          <!-- Mods Section (Remote from Modrinth, version-filtered) -->
+          <template v-if="modResults.length > 0">
+            <div class="px-4 pt-3 pb-1.5 text-[10px] font-600 uppercase tracking-widest text-white/30 flex items-center gap-2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="rgba(192,132,252,0.7)" stroke="none"><path d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5a2.5 2.5 0 0 0-5 0V5H4c-1.1 0-2 .9-2 2v3.8h1.5a2.7 2.7 0 0 1 0 5.4H2V20c0 1.1.9 2 2 2h3.8v-1.5a2.7 2.7 0 0 1 5.4 0V22H17c1.1 0 2-.9 2-2v-4h1.5a2.5 2.5 0 0 0 0-5z"/></svg>
+              {{ t('spotlight.sections.mods') }}
+              <span v-if="currentGameVersion" class="text-white/20 font-mono normal-case">· {{ currentGameVersion }}</span>
+            </div>
+            <div
+              v-for="(mod, index) in modResults"
+              :key="'m-' + mod.id"
+              class="mx-2 px-3 py-2.5 rounded-xl cursor-pointer flex items-center gap-3 transition-all duration-150"
+              :class="highlightedIndex === getModIndex(index) ? 'bg-white/8' : 'hover:bg-white/4'"
+              @click="installMod(mod)"
+              @mouseenter="highlightedIndex = getModIndex(index)"
+            >
+              <div style="width: 36px; height: 36px; min-width: 36px; flex: 0 0 36px; border-radius: 4px;" class="overflow-hidden flex-shrink-0 bg-white/5 flex items-center justify-center">
+                <v-img v-if="mod.iconUrl" :src="mod.iconUrl" class="w-full h-full" />
+                <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="rgba(192,132,252,0.6)" stroke="none"><path d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5a2.5 2.5 0 0 0-5 0V5H4c-1.1 0-2 .9-2 2v3.8h1.5a2.7 2.7 0 0 1 0 5.4H2V20c0 1.1.9 2 2 2h3.8v-1.5a2.7 2.7 0 0 1 5.4 0V22H17c1.1 0 2-.9 2-2v-4h1.5a2.5 2.5 0 0 0 0-5z"/></svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-500 text-white/90 truncate">{{ mod.title }}</div>
+                <div class="text-[11px] text-white/35 truncate mt-0.5">{{ mod.description }}</div>
+              </div>
+              <div class="flex-shrink-0 flex items-center">
+                <!-- Installing spinner -->
+                <div v-if="installingMods[mod.id]" class="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-white/5">
+                  <v-progress-circular indeterminate size="14" width="2" color="#60a5fa" />
+                  <span class="text-[11px] text-blue-400">{{ t('spotlight.installing') }}</span>
+                </div>
+                <!-- Installed check -->
+                <div v-else-if="installedMods[mod.id]" class="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-emerald-500/10">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  <span class="text-[11px] text-emerald-400">{{ t('spotlight.installed') }}</span>
+                </div>
+                <!-- Install failed -->
+                <div v-else-if="failedMods[mod.id]" class="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-red-500/10">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  <span class="text-[11px] text-red-400">{{ t('spotlight.installFailed') }}</span>
+                </div>
+                <!-- Install button -->
+                <div v-else class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/12 text-emerald-400 hover:bg-emerald-500/20 transition-colors">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  <span class="text-[11px] font-500">{{ t('spotlight.install') }}</span>
+                </div>
+              </div>
+            </div>
+          </template>
 
-          <!-- Mods Section (Local + Remote) -->
-          <v-subheader v-if="localModResults.length > 0 || modpackResults.length > 0" class="spotlight-section-header px-4 py-2 text-xs font-semibold uppercase tracking-wider text-gray-500 bg-[#151515]">
-            <v-icon size="16" class="mr-2 text-purple-500">
-              mdi-puzzle
-            </v-icon>
-            {{ t('spotlight.sections.mods') }}
-          </v-subheader>
-          
-          <!-- Local Mods -->
-          <v-list-item
-            v-for="(mod, index) in localModResults"
-            :key="'mod-' + mod.id"
-            :class="{ 'bg-[#2a2a2a]': highlightedIndex === getModIndex(index) }"
-            class="spotlight-item px-4 py-3 rounded-lg mx-2 my-1 cursor-pointer transition-colors duration-150 hover:bg-[#252525]"
-            @click="selectMod(mod, 'local')"
-          >
-            <v-list-item-avatar :size="42" class="rounded-xl min-w-[42px] h-[42px]">
-              <v-img
-                v-if="mod.icon"
-                :src="mod.icon"
-                class="rounded-xl"
-              />
-              <v-icon v-else color="purple" class="rounded-xl bg-purple-500/20 p-2">
-                mdi-puzzle
-              </v-icon>
-            </v-list-item-avatar>
-            <v-list-item-content class="ml-3">
-              <v-list-item-title class="font-semibold text-white">
-                {{ mod.title }}
-              </v-list-item-title>
-              <v-list-item-subtitle class="spotlight-subtitle text-gray-400 text-xs mt-1 truncate">
-                {{ mod.description }}
-              </v-list-item-subtitle>
-            </v-list-item-content>
-            <v-list-item-action v-if="mod.installed && mod.installed.length > 0">
-              <v-chip x-small color="green" class="rounded-full">Installed</v-chip>
-            </v-list-item-action>
-          </v-list-item>
-          
-          <!-- Remote Mods (from Modrinth search) -->
-          <v-list-item
-            v-for="(pack, index) in modpackResults"
-            :key="'mod-' + pack.id"
-            :class="{ 'bg-[#2a2a2a]': highlightedIndex === getRemoteModIndex(index) }"
-            class="spotlight-item px-4 py-3 rounded-lg mx-2 my-1 cursor-pointer transition-colors duration-150 hover:bg-[#252525]"
-            @click="selectMod(pack, 'remote')"
-          >
-            <v-list-item-avatar :size="42" class="rounded-xl min-w-[42px] h-[42px]">
-              <v-img
-                v-if="pack.iconUrl"
-                :src="pack.iconUrl"
-                class="rounded-xl"
-              />
-              <v-icon v-else :color="getSourceColor(pack.type)" class="rounded-xl p-2" :class="getSourceIconBgClass(pack.type)">
-                {{ getSourceIconName(pack.type) }}
-              </v-icon>
-            </v-list-item-avatar>
-            <v-list-item-content class="ml-3">
-              <v-list-item-title class="font-semibold text-white">
-                {{ pack.localizedTitle || pack.title }}
-              </v-list-item-title>
-              <v-list-item-subtitle class="spotlight-subtitle text-gray-400 text-xs mt-1 truncate">
-                {{ pack.localizedDescription || pack.description }}
-              </v-list-item-subtitle>
-            </v-list-item-content>
-            <v-list-item-action>
-              <v-chip x-small color="primary" class="rounded-full">
-                <v-icon left x-small>mdi-download</v-icon>
-                Install
-              </v-chip>
-            </v-list-item-action>
-          </v-list-item>
+          <!-- Local Mods Section -->
+          <template v-if="localModResults.length > 0">
+            <div class="px-4 pt-3 pb-1.5 text-[10px] font-600 uppercase tracking-widest text-white/30 flex items-center gap-2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(251,146,60,0.7)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+              {{ t('spotlight.sections.localMods') }}
+            </div>
+            <div
+              v-for="(mod, index) in localModResults"
+              :key="'l-' + mod.id"
+              class="mx-2 px-3 py-2.5 rounded-xl cursor-pointer flex items-center gap-3 transition-all duration-150"
+              :class="highlightedIndex === getLocalModIndex(index) ? 'bg-white/8' : 'hover:bg-white/4'"
+              @click="selectLocalMod(mod)"
+              @mouseenter="highlightedIndex = getLocalModIndex(index)"
+            >
+              <div style="width: 36px; height: 36px; min-width: 36px; flex: 0 0 36px; border-radius: 4px;" class="overflow-hidden flex-shrink-0 bg-white/5 flex items-center justify-center">
+                <v-img v-if="mod.icon" :src="mod.icon" class="w-full h-full" />
+                <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(251,146,60,0.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-500 text-white/90 truncate">{{ mod.title }}</div>
+                <div class="text-[11px] text-white/35 truncate mt-0.5">{{ mod.description }}</div>
+              </div>
+              <div v-if="mod.installed && mod.installed.length > 0" class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(52,211,153,0.7)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                <span class="text-[10px] text-emerald-400/70">{{ t('spotlight.installed') }}</span>
+              </div>
+            </div>
+          </template>
 
-          <!-- Install Mod Suggestion -->
-          <v-subheader v-if="showInstallSuggestion" class="spotlight-section-header px-4 py-2 text-xs font-semibold uppercase tracking-wider text-gray-500 bg-[#151515]">
-            <v-icon size="16" class="mr-2 text-primary">
-              mdi-download
-            </v-icon>
-            {{ t('spotlight.sections.suggestions') }}
-          </v-subheader>
-          <v-list-item
-            v-if="showInstallSuggestion"
-            :class="{ 'bg-[#2a2a2a]': highlightedIndex === getSuggestionIndex() }"
-            class="spotlight-item spotlight-suggestion px-4 py-3 rounded-lg mx-2 my-1 cursor-pointer transition-colors duration-150 hover:bg-[#252525] border-l-4 border-primary"
-            @click="navigateToStore"
-          >
-            <v-list-item-avatar :size="42" class="rounded-xl min-w-[42px] h-[42px]">
-              <v-icon color="primary" class="rounded-xl bg-primary/20 p-2">
-                mdi-store
-              </v-icon>
-            </v-list-item-avatar>
-            <v-list-item-content class="ml-3">
-              <v-list-item-title class="font-semibold text-primary">
-                {{ t('spotlight.installMod', { modName: searchQuery }) }}
-              </v-list-item-title>
-              <v-list-item-subtitle class="spotlight-subtitle text-gray-400 text-xs mt-1">
-                {{ t('spotlight.installModSubtitle') }}
-              </v-list-item-subtitle>
-            </v-list-item-content>
-            <v-list-item-action>
-              <v-icon small color="primary">
-                mdi-open-in-new
-              </v-icon>
-            </v-list-item-action>
-          </v-list-item>
+          <!-- No Mod Loader Info -->
+          <div v-if="!currentModLoader && searchQuery.trim().length > 1 && filteredInstances.length === 0" class="px-6 py-10 flex flex-col items-center gap-2 text-center">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            <div class="text-sm text-white/30">{{ t('spotlight.noModLoader') }}</div>
+          </div>
 
           <!-- No Results -->
-          <v-list-item v-if="noResults" class="py-8">
-            <v-list-item-content>
-              <v-list-item-title class="text-center text-gray-500">
-                <v-icon size="48" class="mb-2 opacity-50">
-                  mdi-search-off
-                </v-icon>
-                <div>{{ t('spotlight.noResults') }}</div>
-              </v-list-item-title>
-            </v-list-item-content>
-          </v-list-item>
-        </v-list>
+          <div v-else-if="noResults" class="px-6 py-10 flex flex-col items-center gap-2 text-center">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="8" x2="14" y2="14"/><line x1="14" y1="8" x2="8" y2="14"/></svg>
+            <div class="text-sm text-white/30">{{ t('spotlight.noResults') }}</div>
+          </div>
+        </div>
 
-        <v-list v-else dense class="pa-0 bg-transparent">
+        <!-- Empty State: Quick Actions + Recent -->
+        <div v-else class="py-1">
           <!-- Quick Actions -->
-          <v-subheader class="spotlight-section-header px-4 py-2 text-xs font-semibold uppercase tracking-wider text-gray-500 bg-[#151515]">
-            <v-icon size="16" class="mr-2 text-yellow-500">
-              mdi-flash
-            </v-icon>
+          <div class="px-4 pt-3 pb-1.5 text-[10px] font-600 uppercase tracking-widest text-white/30 flex items-center gap-2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(251,191,36,0.7)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
             {{ t('spotlight.sections.quickActions') }}
-          </v-subheader>
-          <v-list-item
+          </div>
+          <div
             v-for="(action, index) in quickActions"
-            :key="'action-' + action.id"
-            :class="{ 'bg-[#2a2a2a]': highlightedIndex === index }"
-            class="spotlight-item px-4 py-3 rounded-lg mx-2 my-1 cursor-pointer transition-colors duration-150 hover:bg-[#252525]"
+            :key="'a-' + action.id"
+            class="mx-2 px-3 py-2.5 rounded-xl cursor-pointer flex items-center gap-3 transition-all duration-150"
+            :class="highlightedIndex === index ? 'bg-white/8' : 'hover:bg-white/4'"
             @click="action.action"
+            @mouseenter="highlightedIndex = index"
           >
-            <v-list-item-avatar :size="42" class="rounded-xl min-w-[42px] h-[42px]">
-              <div class="rounded-xl p-2 w-[42px] h-[42px] flex items-center justify-center" :class="getActionIconBgClass(action.color)">
-                <span v-html="action.icon" :class="`text-${action.color}`" style="display: inline-flex; width: 24px; height: 24px;"></span>
-              </div>
-            </v-list-item-avatar>
-            <v-list-item-content class="ml-3">
-              <v-list-item-title class="font-semibold text-white">
-                {{ t(`spotlight.${action.label}`) }}
-              </v-list-item-title>
-            </v-list-item-content>
-          </v-list-item>
+            <div style="width: 36px; height: 36px; min-width: 36px; flex: 0 0 36px; border-radius: 4px;" class="flex items-center justify-center" :class="action.bgClass">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" :stroke="action.iconColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" v-html="action.svgPath" />
+            </div>
+            <div class="text-sm font-500 text-white/80">{{ t(`spotlight.${action.label}`) }}</div>
+          </div>
 
           <!-- Recent Instances -->
-          <v-subheader v-if="recentInstances.length > 0" class="spotlight-section-header px-4 py-2 text-xs font-semibold uppercase tracking-wider text-gray-500 bg-[#151515]">
-            <v-icon size="16" class="mr-2 text-orange-500">
-              mdi-history
-            </v-icon>
-            {{ t('spotlight.sections.recent') }}
-          </v-subheader>
-          <v-list-item
-            v-for="instance in recentInstances"
-            :key="'recent-' + instance.path"
-            class="spotlight-item px-4 py-3 rounded-lg mx-2 my-1 cursor-pointer transition-colors duration-150 hover:bg-[#252525]"
-            @click="selectInstance(instance)"
-          >
-            <v-list-item-avatar :size="42" class="rounded-xl min-w-[42px] h-[42px]">
-              <v-img
-                v-if="instance.icon"
-                :src="instance.icon"
-                class="rounded-xl"
-              />
-              <v-icon v-else color="orange" class="rounded-xl bg-orange-500/20 p-2">
-                mdi-folder
-              </v-icon>
-            </v-list-item-avatar>
-            <v-list-item-content class="ml-3">
-              <v-list-item-title class="font-semibold text-white">
-                {{ instance.name }}
-              </v-list-item-title>
-              <v-list-item-subtitle class="spotlight-subtitle text-gray-400 text-xs mt-1">
-                {{ instance.runtime?.minecraft }}
-              </v-list-item-subtitle>
-            </v-list-item-content>
-          </v-list-item>
-        </v-list>
-      </v-card-text>
-    </v-card>
+          <template v-if="recentInstances.length > 0">
+            <div class="px-4 pt-3 pb-1.5 text-[10px] font-600 uppercase tracking-widest text-white/30 flex items-center gap-2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+              {{ t('spotlight.sections.recent') }}
+            </div>
+            <div
+              v-for="(instance, idx) in recentInstances"
+              :key="'r-' + instance.path"
+              class="mx-2 px-3 py-2.5 rounded-xl cursor-pointer flex items-center gap-3 transition-all duration-150"
+              :class="highlightedIndex === quickActions.length + idx ? 'bg-white/8' : 'hover:bg-white/4'"
+              @click="selectInstance(instance)"
+              @mouseenter="highlightedIndex = quickActions.length + idx"
+            >
+              <div style="width: 36px; height: 36px; min-width: 36px; flex: 0 0 36px; border-radius: 4px;" class="overflow-hidden flex-shrink-0 bg-white/5 flex items-center justify-center">
+                <v-img v-if="instance.icon" :src="instance.icon" class="w-full h-full" />
+                <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-500 text-white/80 truncate">{{ instance.name }}</div>
+                <div class="text-[11px] text-white/30 mt-0.5">{{ instance.runtime?.minecraft }} · {{ getModLoaderName(instance.runtime) }}</div>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="px-4 py-2 border-t border-white/5 flex items-center justify-between">
+        <div class="flex items-center gap-2 text-[10px] text-white/20">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"/><line x1="6" y1="8" x2="6.01" y2="8"/><line x1="10" y1="8" x2="10.01" y2="8"/><line x1="14" y1="8" x2="14.01" y2="8"/><line x1="18" y1="8" x2="18.01" y2="8"/><line x1="8" y1="12" x2="8.01" y2="12"/><line x1="12" y1="12" x2="12.01" y2="12"/><line x1="16" y1="12" x2="16.01" y2="12"/><line x1="7" y1="16" x2="17" y2="16"/></svg>
+          <span>Ctrl+K</span>
+        </div>
+        <div v-if="currentGameVersion && currentModLoader" class="flex items-center gap-1.5 text-[10px] text-white/20">
+          <div class="w-1.5 h-1.5 rounded-full bg-emerald-400/50" />
+          <span>{{ currentGameVersion }} · {{ currentModLoader }}</span>
+        </div>
+      </div>
+    </div>
   </v-dialog>
 </template>
 
@@ -320,139 +221,77 @@ import { kInstance } from '@/composables/instance'
 import { Instance } from '@xmcl/instance'
 import { useSpotlightSearch } from '@/composables/spotlightSearch'
 import { useService } from '@/composables/service'
-import { InstanceServiceKey } from '@xmcl/runtime-api'
+import { InstanceModsServiceKey, InstanceServiceKey, MarketType } from '@xmcl/runtime-api'
+import { clientModrinthV2 } from '@/util/clients'
 
 const { t } = useI18n()
 const router = useRouter()
 const { instances } = injection(kInstances)
 const { instance: currentInstance } = injection(kInstance)
+const { installFromMarket } = useService(InstanceModsServiceKey)
 const { editInstance } = useService(InstanceServiceKey)
 
-// Dialog visibility
+// Dialog state
 const isVisible = ref(false)
 const searchQuery = ref('')
 const highlightedIndex = ref(0)
-const searchInput = ref<any>(null)
+const searchInput = ref<HTMLInputElement | null>(null)
 
-// Current route context
-const currentRoute = ref('')
+// Install state tracking
+const installingMods = reactive<Record<string, boolean>>({})
+const installedMods = reactive<Record<string, boolean>>({})
+const failedMods = reactive<Record<string, boolean>>({})
+
+// Current instance info
+const currentGameVersion = computed(() => currentInstance.value?.runtime?.minecraft)
+const currentModLoader = computed(() => {
+  const rt = currentInstance.value?.runtime
+  if (rt?.fabricLoader) return 'fabric'
+  if (rt?.forge) return 'forge'
+  if (rt?.quiltLoader) return 'quilt'
+  if (rt?.neoForged) return 'neoforge'
+  return undefined
+})
 
 // Quick actions
 const quickActions = computed(() => [
-  { id: 'create', label: 'createGame', icon: createGameIcon, color: 'primary', action: () => navigateToCreate() },
-  { id: 'settings', label: 'globalSettings', icon: settingsIcon, color: 'grey', action: () => navigateToSettings() },
-  { id: 'mods', label: 'mods', icon: modsIcon, color: 'blue', action: () => navigateToMods() },
-  { id: 'store', label: 'store', icon: storeIcon, color: 'green', action: () => navigateToStore() },
+  { id: 'settings', label: 'globalSettings', svgPath: '<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>', iconColor: 'rgba(255,255,255,0.5)', bgClass: 'bg-white/6', action: () => navigateToSettings() },
+  { id: 'mods', label: 'mods', svgPath: '<path d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5a2.5 2.5 0 0 0-5 0V5H4c-1.1 0-2 .9-2 2v3.8h1.5a2.7 2.7 0 0 1 0 5.4H2V20c0 1.1.9 2 2 2h3.8v-1.5a2.7 2.7 0 0 1 5.4 0V22H17c1.1 0 2-.9 2-2v-4h1.5a2.5 2.5 0 0 0 0-5z" fill="rgba(96,165,250,0.7)" stroke="none"/>', iconColor: 'rgba(96,165,250,0.7)', bgClass: 'bg-blue-500/10', action: () => navigateToMods() },
+  { id: 'store', label: 'store', svgPath: '<path d="M3 9l1-4h16l1 4M3 9v11a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V9M3 9h18M9 21V9M15 21V9M12 5V3"/>', iconColor: 'rgba(52,211,153,0.7)', bgClass: 'bg-emerald-500/10', action: () => navigateToStore() },
 ])
 
-// SVG Icons
-const createGameIcon = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>'
-const settingsIcon = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>'
-const modsIcon = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5C13 2.12 11.88 1 10.5 1S8 2.12 8 3.5V5H4c-1.1 0-1.99.9-1.99 2v3.8H3.5c1.49 0 2.7 1.21 2.7 2.7s-1.21 2.7-2.7 2.7H2V20c0 1.1.9 2 2 2h3.8v-1.5c0-1.49 1.21-2.7 2.7-2.7 1.49 0 2.7 1.21 2.7 2.7V22H17c1.1 0 2-.9 2-2v-4h1.5c1.38 0 2.5-1.12 2.5-2.5S21.88 11 20.5 11z"/></svg>'
-const storeIcon = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4v2h16V4zm1 10v-2l-1-5H4l-1 5v2h1v6h10v-6h4v6h2v-6h1zm-9 4H6v-4h6v4z"/></svg>'
-
 // Recent instances (last 5)
-const recentInstances = computed(() => {
-  return instances.value.slice(0, 5)
-})
+const recentInstances = computed(() => instances.value.slice(0, 5))
 
-// Spotlight search
+// Spotlight search with game version + loader filtering
 const {
-  modpackResults,
+  modResults,
   localModResults,
   isSearching,
-} = useSpotlightSearch(searchQuery)
+} = useSpotlightSearch(searchQuery, currentGameVersion, currentModLoader)
 
 // Filter instances by search query
 const filteredInstances = computed(() => {
-  if (!searchQuery.value.trim()) {
-    return []
-  }
+  if (!searchQuery.value.trim()) return []
   const query = searchQuery.value.toLowerCase()
   return instances.value.filter(instance =>
     instance.name.toLowerCase().includes(query) ||
-    instance.runtime?.minecraft?.includes(query)
-  )
+    instance.runtime?.minecraft?.includes(query),
+  ).slice(0, 5)
 })
 
-// Check if we should show install suggestion
-const showInstallSuggestion = computed(() => {
-  return searchQuery.value.trim().length > 2 &&
-    localModResults.value.length === 0 &&
-    modpackResults.value.length === 0
-})
-
-// No results message
+// No results
 const noResults = computed(() => {
   if (!searchQuery.value.trim()) return false
   return filteredInstances.value.length === 0 &&
-    modpackResults.value.length === 0 &&
-    localModResults.value.length === 0 &&
-    !showInstallSuggestion.value
+    modResults.value.length === 0 &&
+    localModResults.value.length === 0
 })
 
-// Index calculation for navigation
+// Navigation index calculations
 const getInstanceIndex = (index: number) => index
-const getModpackIndex = (index: number) => filteredInstances.value.length + index
-const getModIndex = (index: number) => filteredInstances.value.length + modpackResults.value.length + index
-const getRemoteModIndex = (index: number) => filteredInstances.value.length + localModResults.value.length + index
-const getSuggestionIndex = () => filteredInstances.value.length + modpackResults.value.length + localModResults.value.length
-
-// Get source icon component name
-function getSourceIconName(type: string) {
-  switch (type) {
-    case 'modrinth':
-      return 'mdi-package-variant'
-    case 'curseforge':
-      return 'mdi-flame'
-    case 'ftb':
-      return 'mdi-folder-star'
-    default:
-      return 'mdi-package-variant'
-  }
-}
-
-// Get source icon background class
-function getSourceIconBgClass(type: string) {
-  switch (type) {
-    case 'modrinth':
-      return 'bg-green-500/20'
-    case 'curseforge':
-      return 'bg-orange-500/20'
-    case 'ftb':
-      return 'bg-blue-500/20'
-    default:
-      return 'bg-gray-500/20'
-  }
-}
-
-// Get action icon background class
-function getActionIconBgClass(color: string) {
-  switch (color) {
-    case 'primary':
-      return 'bg-primary/20'
-    case 'blue':
-      return 'bg-blue-500/20'
-    case 'green':
-      return 'bg-green-500/20'
-    default:
-      return 'bg-gray-500/20'
-  }
-}
-
-// Get source color
-function getSourceColor(type: string) {
-  switch (type) {
-    case 'modrinth':
-      return 'green'
-    case 'curseforge':
-      return 'orange'
-    case 'ftb':
-      return 'blue'
-    default:
-      return 'grey'
-  }
-}
+const getModIndex = (index: number) => filteredInstances.value.length + index
+const getLocalModIndex = (index: number) => filteredInstances.value.length + modResults.value.length + index
 
 // Get mod loader name
 function getModLoaderName(runtime: Instance['runtime']) {
@@ -463,7 +302,7 @@ function getModLoaderName(runtime: Instance['runtime']) {
   return 'Vanilla'
 }
 
-// Navigation functions
+// Navigation
 function navigateDown() {
   const maxIndex = getMaxIndex()
   highlightedIndex.value = Math.min(highlightedIndex.value + 1, maxIndex)
@@ -477,31 +316,35 @@ function getMaxIndex() {
   if (!searchQuery.value.trim()) {
     return quickActions.value.length + recentInstances.value.length - 1
   }
-  
-  let max = filteredInstances.value.length + localModResults.value.length + modpackResults.value.length - 1
-  
-  if (showInstallSuggestion.value) max++
-  return Math.max(max, 0)
+  return Math.max(
+    filteredInstances.value.length + modResults.value.length + localModResults.value.length - 1,
+    0,
+  )
 }
 
 function selectHighlighted() {
   if (!searchQuery.value.trim()) {
     if (highlightedIndex.value < quickActions.value.length) {
       quickActions.value[highlightedIndex.value].action()
+    } else {
+      const recentIdx = highlightedIndex.value - quickActions.value.length
+      if (recentIdx >= 0 && recentIdx < recentInstances.value.length) {
+        selectInstance(recentInstances.value[recentIdx])
+      }
     }
     return
   }
 
   if (highlightedIndex.value < filteredInstances.value.length) {
     selectInstance(filteredInstances.value[highlightedIndex.value])
-  } else if (highlightedIndex.value < filteredInstances.value.length + localModResults.value.length) {
+  } else if (highlightedIndex.value < filteredInstances.value.length + modResults.value.length) {
     const idx = highlightedIndex.value - filteredInstances.value.length
-    selectMod(localModResults.value[idx], 'local')
-  } else if (highlightedIndex.value < filteredInstances.value.length + localModResults.value.length + modpackResults.value.length) {
-    const idx = highlightedIndex.value - filteredInstances.value.length - localModResults.value.length
-    selectMod(modpackResults.value[idx], 'remote')
-  } else if (showInstallSuggestion.value) {
-    navigateToStore()
+    installMod(modResults.value[idx])
+  } else {
+    const idx = highlightedIndex.value - filteredInstances.value.length - modResults.value.length
+    if (idx >= 0 && idx < localModResults.value.length) {
+      selectLocalMod(localModResults.value[idx])
+    }
   }
 }
 
@@ -511,84 +354,87 @@ function selectInstance(instance: Instance) {
   editInstance({ instancePath: instance.path })
 }
 
-function selectModpack(pack: any) {
+function selectLocalMod(_mod: any) {
   close()
-  router.push({ path: `/store/${pack.type}/${pack.id}` })
+  router.push({ path: '/mods' })
 }
 
-function selectMod(mod: any, type: 'local' | 'remote') {
-  close()
-  
-  // If local mod, just navigate to mods page
-  if (type === 'local') {
-    router.push({ path: '/mods' })
-    return
-  }
-  
-  // If remote mod and we have a current instance, install directly
-  if (currentInstance.value && currentInstance.value.path) {
-    const instanceVersion = currentInstance.value.runtime?.minecraft
-    const modLoader = currentInstance.value.runtime?.fabricLoader 
-      ? 'fabric' 
-      : currentInstance.value.runtime?.forge 
-        ? 'forge' 
-        : currentInstance.value.runtime?.quiltLoader 
-          ? 'quilt' 
-          : currentInstance.value.runtime?.neoForged 
-            ? 'neoforge' 
-            : undefined
-    
-    // Install mod directly using MarketService
-    installModDirectly(mod, currentInstance.value.path, instanceVersion, modLoader)
-  } else {
-    // No current instance, just navigate to mod page
-    router.push({ path: `/store/${mod.type}/${mod.id}` })
-  }
-}
+// DIRECT MOD INSTALLATION
+async function installMod(mod: any) {
+  if (installingMods[mod.id] || installedMods[mod.id]) return
 
-async function installModDirectly(mod: any, instancePath: string, gameVersion: string, modLoader?: string) {
+  const instancePath = currentInstance.value?.path
+  const gameVersion = currentGameVersion.value
+  const loader = currentModLoader.value
+
+  if (!instancePath || !gameVersion || !loader) return
+
+  installingMods[mod.id] = true
+  delete failedMods[mod.id]
+
   try {
-    // Get the latest version for this game version and mod loader
-    const latestVersion = await getLatestModVersion(mod.id, mod.type, gameVersion, modLoader)
-    
-    if (latestVersion) {
-      // Navigate to store with auto-install flag
-      router.push({
-        path: `/store/${mod.type}/${mod.id}`,
-        query: {
-          install: '1',
-          instance: instancePath,
-          version: latestVersion.id,
-        },
-      })
-    }
-  } catch (e: any) {
-    console.error('Failed to install mod:', e)
-  }
-}
+    // 1. Fetch the latest version for this game version + loader
+    const versions = await clientModrinthV2.getProjectVersions(mod.id, {
+      loaders: [loader],
+      gameVersions: [gameVersion],
+    })
 
-async function getLatestModVersion(projectId: string, type: string, gameVersion: string, modLoader?: string) {
-  try {
-    if (type === 'modrinth') {
-      const loaderParam = modLoader ? `&loader=${encodeURIComponent(modLoader)}` : ''
-      const response = await fetch(`https://api.modrinth.com/v2/project/${projectId}/version?game_version=${encodeURIComponent(gameVersion)}${loaderParam}`)
-      if (!response.ok) return null
-      
-      const versions = await response.json()
-      return versions[0] || null
+    if (!versions || versions.length === 0) {
+      failedMods[mod.id] = true
+      delete installingMods[mod.id]
+      return
     }
-    return null
+
+    const latestVersion = versions[0]
+
+    // 2. Collect required dependencies
+    const depVersionIds: { versionId: string; icon?: string }[] = []
+
+    const requiredDeps = latestVersion.dependencies?.filter(
+      (d: any) => d.dependency_type === 'required',
+    ) || []
+
+    for (const dep of requiredDeps) {
+      if (dep.version_id) {
+        depVersionIds.push({ versionId: dep.version_id })
+      } else if (dep.project_id) {
+        // Fetch the best version for this dependency
+        try {
+          const depVersions = await clientModrinthV2.getProjectVersions(dep.project_id, {
+            loaders: [loader],
+            gameVersions: [gameVersion],
+          })
+          if (depVersions && depVersions.length > 0) {
+            depVersionIds.push({ versionId: depVersions[0].id })
+          }
+        } catch {
+          // Skip if dependency version can't be found
+        }
+      }
+    }
+
+    // 3. Install mod + dependencies
+    const allVersions = [
+      { versionId: latestVersion.id, icon: mod.iconUrl },
+      ...depVersionIds,
+    ]
+
+    await installFromMarket({
+      market: MarketType.Modrinth,
+      version: allVersions,
+      instancePath,
+    })
+
+    installedMods[mod.id] = true
   } catch (e) {
-    console.error('Failed to get mod version:', e)
-    return null
+    console.error('Failed to install mod:', e)
+    failedMods[mod.id] = true
+  } finally {
+    delete installingMods[mod.id]
   }
 }
 
 // Navigation actions
-function navigateToCreate() {
-  close()
-}
-
 function navigateToSettings() {
   close()
   router.push({ path: '/setting' })
@@ -609,12 +455,15 @@ function onSearchFocus() {
   highlightedIndex.value = 0
 }
 
-// Open/close functions
+// Open/close
 function open() {
   isVisible.value = true
   searchQuery.value = ''
   highlightedIndex.value = 0
-  currentRoute.value = (router.currentRoute as any)?.path || window.location.hash.slice(1) || '/'
+  // Reset install states
+  Object.keys(installingMods).forEach(k => delete installingMods[k])
+  Object.keys(installedMods).forEach(k => delete installedMods[k])
+  Object.keys(failedMods).forEach(k => delete failedMods[k])
   nextTick(() => {
     searchInput.value?.focus()
   })
@@ -625,76 +474,44 @@ function close() {
   searchQuery.value = ''
 }
 
-// Watch for route changes
-watch(() => router.currentRoute?.path, (newPath) => {
-  currentRoute.value = newPath || ''
-})
-
-// Expose open method for parent
 defineExpose({ open, close })
 </script>
 
-<style>
-.spotlight-dialog .v-card {
-  background: #1e1e1e;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+<style scoped>
+.spotlight-overlay {
+  align-self: flex-start !important;
+  margin-top: 80px !important;
 }
 
-.spotlight-dialog .spotlight-search input {
-  background: transparent;
-  color: #fff;
-  font-size: 16px;
-}
-
-.spotlight-dialog .spotlight-search input::placeholder {
-  color: #6b7280;
-}
-
-.spotlight-dialog .spotlight-results {
+.spotlight-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: #3a3a3a transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
 }
 
-.spotlight-dialog .spotlight-results::-webkit-scrollbar {
-  width: 6px;
+.spotlight-scrollbar::-webkit-scrollbar {
+  width: 4px;
 }
 
-.spotlight-dialog .spotlight-results::-webkit-scrollbar-track {
+.spotlight-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.spotlight-dialog .spotlight-results::-webkit-scrollbar-thumb {
-  background: #3a3a3a;
-  border-radius: 3px;
+.spotlight-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
 }
 
-.spotlight-dialog .spotlight-results::-webkit-scrollbar-thumb:hover {
-  background: #4a4a4a;
+.spotlight-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.14);
 }
 
-.spotlight-dialog .v-list-item__avatar {
-  margin: 0;
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
 }
 
-.spotlight-dialog .v-chip {
-  font-size: 11px;
-  height: 20px;
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
-
-/* SVG Icon colors */
-.spotlight-dialog .text-primary svg {
-  color: rgb(var(--v-theme-primary));
-}
-
-.spotlight-dialog .text-blue svg {
-  color: rgb(59, 130, 246);
-}
-
-.spotlight-dialog .text-green svg {
-  color: rgb(34, 197, 94);
-}
-
-.spotlight-dialog .text-grey svg {
-  color: rgb(156, 163, 175);
-}
-</style> 
+</style>
