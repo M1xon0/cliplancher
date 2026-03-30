@@ -1,22 +1,17 @@
-import { CurseforgeBuiltinClassId } from './curseforge'
 import { useService } from './service'
 import { InstanceModsServiceKey } from '@xmcl/runtime-api'
 import { ref, watch, shallowRef } from 'vue'
 import type { Ref } from 'vue'
 
-interface SpotlightSearchResult {
+export interface SpotlightModResult {
   id: string
-  type: 'modrinth' | 'curseforge' | 'ftb'
+  type: 'modrinth'
   title: string
   iconUrl: string
   description: string
   author: string
   downloadCount: string
-  updatedAt: string
-  version: string
-  gallery: string[]
-  localizedTitle?: string
-  localizedDescription?: string
+  slug: string
 }
 
 interface LocalModResult {
@@ -30,14 +25,24 @@ interface LocalModResult {
   curseforgeProjectId?: number
 }
 
-export function useSpotlightSearch(query: Ref<string>) {
-  const modResults = shallowRef<SpotlightSearchResult[]>([])
+export function useSpotlightSearch(
+  query: Ref<string>,
+  gameVersion: Ref<string | undefined>,
+  modLoader: Ref<string | undefined>,
+) {
+  const modResults = shallowRef<SpotlightModResult[]>([])
   const localModResults = shallowRef<LocalModResult[]>([])
   const isSearching = ref(false)
 
-  // Search mods from Modrinth
-  watch(query, async (newQuery) => {
+  // Search mods from Modrinth filtered by game version & loader
+  watch([query, gameVersion, modLoader], async ([newQuery, gv, ml]) => {
     if (!newQuery || newQuery.trim().length < 2) {
+      modResults.value = []
+      return
+    }
+
+    // Don't search if no game version or no mod loader (vanilla instance)
+    if (!gv || !ml) {
       modResults.value = []
       return
     }
@@ -46,9 +51,8 @@ export function useSpotlightSearch(query: Ref<string>) {
     const searchQuery = newQuery.trim()
 
     try {
-      // Search Modrinth for mods
-      const modrinthMods = await searchModrinthMods(searchQuery)
-      modResults.value = modrinthMods.slice(0, 10)
+      const results = await searchModrinthMods(searchQuery, gv, ml)
+      modResults.value = results.slice(0, 8)
     } finally {
       isSearching.value = false
     }
@@ -63,7 +67,6 @@ export function useSpotlightSearch(query: Ref<string>) {
 
     const searchQuery = newQuery.trim().toLowerCase()
 
-    // Search in local mod files
     const { searchInstalled } = useService(InstanceModsServiceKey)
     try {
       const results = await searchInstalled(searchQuery)
@@ -84,16 +87,22 @@ export function useSpotlightSearch(query: Ref<string>) {
   }, { immediate: true })
 
   return {
-    modpackResults: modResults,
+    modResults,
     localModResults,
     isSearching,
   }
 }
 
-// Search Modrinth modpacks
-async function searchModrinthModpacks(query: string): Promise<SpotlightSearchResult[]> {
+// Search Modrinth mods filtered by game version and loader
+async function searchModrinthMods(query: string, gameVersion: string, loader: string): Promise<SpotlightModResult[]> {
   try {
-    const url = `https://api.modrinth.com/v2/search?limit=5&index=relevance&query=${encodeURIComponent(query)}&project_type=modpack`
+    // Build facets: [[game version], [loader], [project_type]]
+    const facets = JSON.stringify([
+      [`versions:${gameVersion}`],
+      [`categories:${loader}`],
+      ['project_type:mod'],
+    ])
+    const url = `https://api.modrinth.com/v2/search?limit=8&index=relevance&query=${encodeURIComponent(query)}&facets=${encodeURIComponent(facets)}`
     const response = await fetch(url)
     if (!response.ok) return []
 
@@ -106,90 +115,10 @@ async function searchModrinthModpacks(query: string): Promise<SpotlightSearchRes
       description: hit.description,
       author: hit.author,
       downloadCount: formatNumber(hit.downloads),
-      updatedAt: formatDate(hit.date_modified),
-      version: hit.versions?.[0] || '',
-      gallery: hit.gallery || [],
-    }))
-  } catch (e) {
-    console.error('Failed to search Modrinth:', e)
-    return []
-  }
-}
-
-// Search Modrinth mods (not modpacks)
-async function searchModrinthMods(query: string): Promise<SpotlightSearchResult[]> {
-  try {
-    const url = `https://api.modrinth.com/v2/search?limit=10&index=relevance&query=${encodeURIComponent(query)}&project_type=mod`
-    const response = await fetch(url)
-    if (!response.ok) return []
-
-    const data = await response.json()
-    return data.hits.map((hit: any) => ({
-      id: hit.project_id,
-      type: 'modrinth' as const,
-      title: hit.title,
-      iconUrl: hit.icon_url,
-      description: hit.description,
-      author: hit.author,
-      downloadCount: formatNumber(hit.downloads),
-      updatedAt: formatDate(hit.date_modified),
-      version: hit.versions?.[0] || '',
-      gallery: hit.gallery || [],
-      gameVersions: hit.versions || [],
+      slug: hit.slug,
     }))
   } catch (e) {
     console.error('Failed to search Modrinth mods:', e)
-    return []
-  }
-}
-
-// Search CurseForge modpacks
-async function searchCurseforgeModpacks(query: string): Promise<SpotlightSearchResult[]> {
-  try {
-    // Direct API call for CurseForge
-    const response = await fetch(`https://api.xmcl.app/curseforge/search?classId=${CurseforgeBuiltinClassId.modpack}&searchTerm=${encodeURIComponent(query)}&pageSize=5`)
-    if (!response.ok) return []
-
-    const data = await response.json()
-    return (data.data || []).map((p: any) => ({
-      id: p.id.toString(),
-      type: 'curseforge' as const,
-      title: p.name,
-      iconUrl: p.logo?.thumbnailUrl || '',
-      description: p.summary,
-      author: p.authors[0]?.name || '',
-      downloadCount: formatNumber(p.downloadCount),
-      updatedAt: formatDate(p.dateModified),
-      version: p.latestFilesIndexes[0]?.gameVersion || '',
-      gallery: p.screenshots.map((s: any) => s?.thumbnailUrl || ''),
-    }))
-  } catch (e) {
-    console.error('Failed to search CurseForge:', e)
-    return []
-  }
-}
-
-// Search FTB modpacks
-async function searchFtbModpacks(query: string): Promise<SpotlightSearchResult[]> {
-  try {
-    const response = await fetch(`https://api.xmcl.app/ftb/search?search=${encodeURIComponent(query)}`)
-    if (!response.ok) return []
-
-    const data = await response.json()
-    return (data.packs || []).slice(0, 5).map((p: any) => ({
-      id: p.toString(),
-      type: 'ftb' as const,
-      title: p.name || '',
-      iconUrl: '',
-      description: p.synopsis || '',
-      author: '',
-      downloadCount: '0',
-      updatedAt: '',
-      version: '',
-      gallery: [],
-    }))
-  } catch (e) {
-    console.error('Failed to search FTB:', e)
     return []
   }
 }
@@ -203,21 +132,3 @@ function formatNumber(num: number): string {
   }
   return num.toString()
 }
-
-function formatDate(dateStr: string): string {
-  try {
-    const date = new Date(dateStr)
-    const now = new Date()
-    const diff = now.getTime() - date.getTime()
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-
-    if (days === 0) return 'Today'
-    if (days === 1) return 'Yesterday'
-    if (days < 7) return `${days} days ago`
-    if (days < 30) return `${Math.floor(days / 7)} weeks ago`
-    if (days < 365) return `${Math.floor(days / 30)} months ago`
-    return `${Math.floor(days / 365)} years ago`
-  } catch {
-    return dateStr
-  }
-} 
