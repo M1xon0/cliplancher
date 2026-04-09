@@ -9,6 +9,7 @@ import { vuetify } from '@/vuetify'
 import 'virtual:uno.css'
 import Vue, { defineComponent, getCurrentInstance, h, provide } from 'vue'
 import App from './App.vue'
+import BootstrapApp from './BootstrapApp.vue'
 import Context from './Context'
 import { router } from './router'
 import { kFlights } from '@/composables/flights'
@@ -61,6 +62,8 @@ function handleMigrate(from: string, to: string) {
   }
 }
 
+const isBootstrap = new URLSearchParams(window.location.search).has('bootstrap')
+
 const app = new Vue(defineComponent({
   i18n,
   vuetify,
@@ -95,6 +98,14 @@ const app = new Vue(defineComponent({
     provide(kServiceFactory, useServiceFactory())
     provide(kDialogModel, useDialogModel())
     provide(kSWRVConfig, useSWRVConfig())
+
+    // During bootstrap (first launch), use a minimal app that doesn't try to
+    // initialize services dependent on the game data path (not set yet).
+    // After setup completes, the page reloads without ?bootstrap so normal
+    // initialization runs with the game data path already available.
+    if (isBootstrap) {
+      return () => h(BootstrapApp)
+    }
 
     return () => h(Context, [h(App)])
   },

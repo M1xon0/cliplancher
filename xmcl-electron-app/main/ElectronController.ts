@@ -128,15 +128,13 @@ export class ElectronController implements LauncherAppController {
     })
 
     this.app.on('second-instance', () => {
-      if (this.parking) {
-        if (this.mainWin) {
-          if (this.mainWin.isMinimized()) {
-            this.mainWin.restore()
-          } else if (!this.mainWin.isVisible()) {
-            this.mainWin.show()
-          }
-          this.mainWin.focus()
+      if (this.mainWin) {
+        if (this.mainWin.isMinimized()) {
+          this.mainWin.restore()
+        } else if (!this.mainWin.isVisible()) {
+          this.mainWin.show()
         }
+        this.mainWin.focus()
       }
     })
 
